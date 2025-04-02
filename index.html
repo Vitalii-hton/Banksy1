@@ -7,7 +7,7 @@
       AFRAME.registerComponent('smooth-move', {
         schema: {
           targetPosition: { type: 'vec3', default: {x: 0, y: 0, z: 0} },
-          targetRotation: { type: 'vec3', default: {x: 0, y: 0, z: 0} },  // Добавим цель для поворота
+          targetRotation: { type: 'vec3', default: {x: 0, y: 0, z: 0} },  // Цель для поворота
           lerpSpeed: { type: 'number', default: 0.1 }
         },
         tick: function (time, timeDelta) {
@@ -20,15 +20,18 @@
           var lerpedPosition = new THREE.Vector3().lerpVectors(new THREE.Vector3(position.x, position.y, position.z), targetPosition, this.data.lerpSpeed * (timeDelta / 1000));
           el.setAttribute('position', lerpedPosition);
 
-          // Сглаживание поворота
-          var rotation = el.getAttribute('rotation');
-          var lerpedRotation = new THREE.Euler().setFromVector3(
-            new THREE.Vector3(rotation.x, rotation.y, rotation.z).lerp(
-              new THREE.Vector3(targetRotation.x, targetRotation.y, targetRotation.z),
-              this.data.lerpSpeed * (timeDelta / 1000)
-            )
-          );
-          el.setAttribute('rotation', lerpedRotation);
+          // Сглаживание поворота с помощью кватернионов
+          var currentRotation = new THREE.Euler().setFromVector3(new THREE.Vector3(el.getAttribute('rotation').x, el.getAttribute('rotation').y, el.getAttribute('rotation').z));
+          var targetRotationEuler = new THREE.Euler().setFromVector3(new THREE.Vector3(targetRotation.x, targetRotation.y, targetRotation.z));
+
+          var currentQuaternion = new THREE.Quaternion().setFromEuler(currentRotation);
+          var targetQuaternion = new THREE.Quaternion().setFromEuler(targetRotationEuler);
+
+          // Интерполяция между кватернионами для сглаживания поворота
+          var lerpedQuaternion = currentQuaternion.slerp(targetQuaternion, this.data.lerpSpeed * (timeDelta / 1000));
+
+          // Применяем сглаженный поворот
+          el.setAttribute('rotation', new THREE.Euler().setFromQuaternion(lerpedQuaternion));
         }
       });
     </script>
@@ -57,7 +60,7 @@
   scale="0.1 0.1 0.1" 
   src="#avatarModel"  
   material="roughness: 0.5; metalness: 0.8"
-         smooth-move="targetPosition: 0 0 0.1; targetRotation: 0 90 0; lerpSpeed: 0.1">
+          smooth-move="targetPosition: 0 0 0.1; targetRotation: 0 -90 0; lerpSpeed: 0.1">
 </a-gltf-model>
       </a-entity>
 
