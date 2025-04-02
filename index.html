@@ -2,38 +2,7 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
-    <script>
-      // Компонент для плавного движения модели с использованием интерполяции
-      AFRAME.registerComponent('smooth-move', {
-        schema: {
-          targetPosition: { type: 'vec3', default: {x: 0, y: 0, z: 0} },
-          lerpSpeed: { type: 'number', default: 0.1 }
-        },
-        tick: function () {
-          var el = this.el;
-          var position = el.getAttribute('position');
-          var target = this.data.targetPosition;
-          var lerpedPosition = new THREE.Vector3().lerpVectors(new THREE.Vector3(position.x, position.y, position.z), target, this.data.lerpSpeed);
-          el.setAttribute('position', lerpedPosition);
-        }
-      });
-
-      // Компонент для динамического обновления targetPosition на основе камеры
-      AFRAME.registerComponent('dynamic-target-position', {
-        tick: function () {
-          var camera = document.querySelector('a-camera'); // Получаем камеру
-          var cameraPos = camera.getAttribute('position'); // Получаем текущую позицию камеры
-
-          // Вычисляем targetPosition на основе положения камеры
-          // Например, модель будет всегда находиться на фиксированном расстоянии по оси Z от камеры
-          var targetPosition = new THREE.Vector3(cameraPos.x, cameraPos.y, cameraPos.z + 1); 
-
-          // Обновляем targetPosition для компонента smooth-move
-          this.el.setAttribute('smooth-move', 'targetPosition', targetPosition);
-        }
-      });
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>    
   </head>
   <body>
     <a-scene mindar-image="imageTargetSrc: https://raw.githubusercontent.com/Vitalii-hton/Banksy1/main/assets/targets.mind;" antialias="true"
@@ -58,9 +27,7 @@
   position="0 0 0.1" 
   scale="0.1 0.1 0.1" 
   src="#avatarModel"  
-  material="roughness: 0.5; metalness: 0.8"
-         smooth-move="targetPosition: 0 0 0.1; lerpSpeed: 0.1"
-         dynamic-target-position>
+  material="roughness: 0.5; metalness: 0.8">
 </a-gltf-model>
       </a-entity>
 
