@@ -1,46 +1,43 @@
 <!doctype html>
 <html>
-    <head>
-        <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/mind-ar.js"></script> <!-- Подключаем MindAR -->
-        <script src="https://raw.githack.com/donmccurdy/aframe-extras/master/dist/aframe-extras.loaders.min.js"></script>
-    </head>
+  <head>
+    <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar.js"></script> <!-- Подключаем MindAR -->
+    <script src="https://raw.githubusercontent.com/donmccurdy/aframe-extras/master/dist/aframe-extras.loaders.min.js"></script>
+  </head>
 
-    <body style="margin: 0; overflow: hidden;">
-        <a-scene
-            vr-mode-ui="enabled: false;"
-            loading-screen="enabled: false;"
-            renderer="webgl2: true; logarithmicDepthBuffer: true; antialias: true; highRefreshRate: true; precision: medium;"
-            mindar="imageTargetUrl: https://raw.githubusercontent.com/Vitalii-hton/Banksy1/main/assets/pattern-frame.png" 
-            shadow="receive: true"
-            id="scene"
-            embedded
-        >
-            <a-assets>
-                <a-asset-item
-                    id="animated-asset"
-                    src="https://raw.githubusercontent.com/Vitalii-hton/Banksy1/main/assets/tank4.glb"
-                ></a-asset-item>
-            </a-assets>
-            
-            <!-- Источники света -->
-            <a-entity light="type: ambient; intensity: 1"></a-entity>
-            <a-entity light="type: directional; color: #00aaff; intensity: 2; castShadow: true;" position="0 2 -5"></a-entity>
-            <a-entity light="type: directional; intensity: 3; castShadow: true;" position="3 10 5"></a-entity>
-            <a-entity light="type: directional; intensity: 3; castShadow: true;" position="-3 -5 5"></a-entity>
+  <body style="margin: 0; overflow: hidden;">
+    <a-scene 
+        mindar="imageTargetUrl: https://raw.githubusercontent.com/Vitalii-hton/Banksy1/main/assets/pattern-frame.png" 
+        shadow="receive: true"
+        id="scene"
+        embedded
+    >
+        <a-assets>
+            <a-asset-item
+                id="animated-asset"
+                src="https://raw.githubusercontent.com/Vitalii-hton/Banksy1/main/assets/tank4.glb"
+            ></a-asset-item>
+        </a-assets>
 
-            <!-- Модель, привязанная к маркеру -->
-            <a-entity
-                id="bowser-model"
-                scale="0.1 0.1 0.1"
-                rotation="0 -90 90"
-                animation-mixer="loop: repeat"
-                gltf-model="#animated-asset"
-                class="clickable"
-            ></a-entity>
+        <!-- Источники света -->
+        <a-entity light="type: ambient; intensity: 1"></a-entity>
+        <a-entity light="type: directional; color: #00aaff; intensity: 2; castShadow: true;" position="0 2 -5"></a-entity>
+        <a-entity light="type: directional; intensity: 3; castShadow: true;" position="3 10 5"></a-entity>
+        <a-entity light="type: directional; intensity: 3; castShadow: true;" position="-3 -5 5"></a-entity>
 
-            <!-- Камера -->
-            <a-entity camera></a-entity>
-        </a-scene>
-    </body>
+        <!-- Модель, привязанная к маркеру -->
+        <a-entity
+            id="bowser-model"
+            scale="0.1 0.1 0.1"
+            rotation="0 -90 90"
+            animation-mixer="loop: repeat"
+            gltf-model="#animated-asset"
+            class="clickable"
+        ></a-entity>
+
+        <!-- Камера -->
+        <a-entity camera></a-entity>
+    </a-scene>
+  </body>
 </html>
