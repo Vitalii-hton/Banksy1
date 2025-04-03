@@ -24,10 +24,10 @@
 
       <a-entity mindar-image-target="targetIndex: 0">
        <a-gltf-model
-        
+         smooth-tracking="speed: 0.05"
   rotation="0 0 0" 
   position="0 0 0.1" 
-  scale="0.1 0.1 0.1" 
+  scale="0.2 0.2 0.2" 
   src="#avatarModel"  
   material="roughness: 0.5; metalness: 0.8"
          >
@@ -35,7 +35,32 @@
       </a-entity>
 
     </a-scene>
-    
+    <script>
+      AFRAME.registerComponent('smooth-tracking', {
+        schema: { speed: { type: 'number', default: 0.1 } }, // Скорость сглаживания
+
+        init: function () {
+          this.targetQuat = new THREE.Quaternion(); // Кватернион цели
+          this.lastQuat = new THREE.Quaternion();   // Последний кватернион
+        },
+
+        tick: function (time, timeDelta) {
+          var el = this.el;
+
+          // Получаем текущий кватернион объекта
+          var currentQuat = el.object3D.quaternion.clone();
+
+          // Обновляем целевой кватернион (куда должен смотреть объект)
+          this.targetQuat.copy(el.object3D.parent.quaternion); // Берем поворот родителя (MindAR target)
+
+          // Применяем slerp для сглаживания
+          this.lastQuat.slerp(this.targetQuat, this.data.speed * (timeDelta / 1000));
+
+          // Обновляем объект
+          el.object3D.quaternion.copy(this.lastQuat);
+        }
+      });
+    </script>
   </body>
 </html>
 
