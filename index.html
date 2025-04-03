@@ -23,19 +23,67 @@
 
 
       <a-entity mindar-image-target="targetIndex: 0">
-       <a-gltf-model
-         
-  rotation="90 0 0" 
-  position="0 0 0.1" 
-  scale="0.2 0.2 0.2" 
-  src="#avatarModel"  
-  material="roughness: 0.5; metalness: 0.8"
-         >
-</a-gltf-model>
+       <a-entity id="model" 
+  gltf-model="#avatarModel" 
+  position="0 0 0.1"
+  scale="0.1 0.1 0.1"
+  rotation="0 -90 0"
+  smooth-tracking="lerpSpeed: 0.05; smoothingFrames: 10">
+</a-entity>
+
       </a-entity>
 
     </a-scene>
-    
+    <script>
+  AFRAME.registerComponent('smooth-tracking', {
+    schema: {
+      lerpSpeed: { type: 'number', default: 0.1 },
+      smoothingFrames: { type: 'int', default: 5 } // Количество кадров для усреднения
+    },
+
+    init: function () {
+      this.marker = document.querySelector('#marker').object3D; // Объект маркера
+      this.model = this.el.object3D; // Наш объект
+
+      this.positions = []; // Массив для хранения последних позиций
+      this.rotations = []; // Массив для хранения последних поворотов
+    },
+
+    tick: function (time, timeDelta) {
+      if (!this.marker.visible) return; // Если маркер пропал, ничего не делаем
+
+      // Берём текущие координаты маркера
+      let targetPos = this.marker.position.clone();
+      let targetRot = this.marker.quaternion.clone();
+
+      // Записываем в массив последних значений
+      this.positions.push(targetPos);
+      this.rotations.push(targetRot);
+
+      // Ограничиваем массив до нужного количества кадров
+      if (this.positions.length > this.data.smoothingFrames) {
+        this.positions.shift();
+        this.rotations.shift();
+      }
+
+      // Усредняем позиции
+      let avgPos = new THREE.Vector3();
+      this.positions.forEach(pos => avgPos.add(pos));
+      avgPos.divideScalar(this.positions.length); // Получаем среднюю позицию
+
+      // Усредняем повороты (через SLERP)
+      let avgRot = this.rotations[0].clone();
+      for (let i = 1; i < this.rotations.length; i++) {
+        avgRot.slerp(this.rotations[i], 1 / (i + 1));
+      }
+
+      // Применяем усреднённые значения
+      this.model.position.lerp(avgPos, this.data.lerpSpeed * (timeDelta / 1000));
+      this.model.quaternion.slerp(avgRot, this.data.lerpSpeed * (timeDelta / 1000));
+    }
+  });
+</script>
+
   </body>
 </html>
 
