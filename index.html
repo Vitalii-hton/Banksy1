@@ -3,87 +3,84 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script> 
-    
   </head>
   <body>
-    <a-scene mindar-image="imageTargetSrc: https://raw.githubusercontent.com/Vitalii-hton/Banksy1/main/assets/inf.mind;" antialias="true"
-             color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" 
-             vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false"
-      renderer="colorManagement: true; physicallyCorrectLights: true; shadowMapType: pcfsoft">
+    <a-scene mindar-image="imageTargetSrc: https://raw.githubusercontent.com/Vitalii-hton/Banksy1/main/assets/inf.mind;" 
+             antialias="true"
+             color-space="sRGB"
+             renderer="colorManagement: true, physicallyCorrectLights"
+             vr-mode-ui="enabled: false" 
+             device-orientation-permission-ui="enabled: false">
 
       <a-assets>
         <a-asset-item id="avatarModel" src="https://raw.githubusercontent.com/Vitalii-hton/Banksy1/main/assets/tank4.glb"></a-asset-item>
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
       <a-entity light="type: ambient; color: #ffffff; intensity: 0; castShadow: false"></a-entity>
-<a-entity light="type: directional; color: #ffffff; intensity: 2; castShadow: true" position="1 2 3"></a-entity>
-<a-entity light="type: directional; color: #0080ff; intensity: 2; castShadow: true" 
-          position="-2 3 -3"></a-entity>
+      <a-entity light="type: directional; color: #ffffff; intensity: 2; castShadow: true" position="1 2 3"></a-entity>
+      <a-entity light="type: directional; color: #0080ff; intensity: 2; castShadow: true" position="-2 3 -3"></a-entity>
 
-
-      <a-entity mindar-image-target="targetIndex: 0">
-       <a-entity id="model" 
-  gltf-model="#avatarModel" 
-  position="0 0 0.1"
-  scale="0.1 0.1 0.1"
-  rotation="0 -90 0"
-  smooth-tracking="lerpSpeed: 0.05; smoothingFrames: 10">
-</a-entity>
-
+      <a-entity id="target" mindar-image-target="targetIndex: 0">
+        <a-entity id="model"
+                  gltf-model="#avatarModel"
+                  position="0 0 0.1"
+                  scale="0.1 0.1 0.1"
+                  rotation="0 -90 0"
+                  smooth-tracking="lerpSpeed: 0.05; smoothingFrames: 10">
+        </a-entity>
       </a-entity>
 
     </a-scene>
+
     <script>
-  AFRAME.registerComponent('smooth-tracking', {
-    schema: {
-      lerpSpeed: { type: 'number', default: 0.1 },
-      smoothingFrames: { type: 'int', default: 5 } // Количество кадров для усреднения
-    },
+      AFRAME.registerComponent('smooth-tracking', {
+        schema: {
+          lerpSpeed: { type: 'number', default: 0.1 },
+          smoothingFrames: { type: 'int', default: 5 }
+        },
 
-    init: function () {
-      this.marker = document.querySelector('#marker').object3D; // Объект маркера
-      this.model = this.el.object3D; // Наш объект
+        init: function () {
+          const targetEl = document.querySelector('#target'); // Берём target
+          if (!targetEl) {
+            console.error("MindAR target не найден!");
+            return;
+          }
+          
+          this.marker = targetEl.object3D;
+          this.model = this.el.object3D;
+          this.positions = [];
+          this.rotations = [];
+        },
 
-      this.positions = []; // Массив для хранения последних позиций
-      this.rotations = []; // Массив для хранения последних поворотов
-    },
+        tick: function (time, timeDelta) {
+          if (!this.marker || !this.marker.visible) return; // Проверка на null
 
-    tick: function (time, timeDelta) {
-      if (!this.marker.visible) return; // Если маркер пропал, ничего не делаем
+          let targetPos = this.marker.position.clone();
+          let targetRot = this.marker.quaternion.clone();
 
-      // Берём текущие координаты маркера
-      let targetPos = this.marker.position.clone();
-      let targetRot = this.marker.quaternion.clone();
+          this.positions.push(targetPos);
+          this.rotations.push(targetRot);
 
-      // Записываем в массив последних значений
-      this.positions.push(targetPos);
-      this.rotations.push(targetRot);
+          if (this.positions.length > this.data.smoothingFrames) {
+            this.positions.shift();
+            this.rotations.shift();
+          }
 
-      // Ограничиваем массив до нужного количества кадров
-      if (this.positions.length > this.data.smoothingFrames) {
-        this.positions.shift();
-        this.rotations.shift();
-      }
+          let avgPos = new THREE.Vector3();
+          this.positions.forEach(pos => avgPos.add(pos));
+          avgPos.divideScalar(this.positions.length);
 
-      // Усредняем позиции
-      let avgPos = new THREE.Vector3();
-      this.positions.forEach(pos => avgPos.add(pos));
-      avgPos.divideScalar(this.positions.length); // Получаем среднюю позицию
+          let avgRot = this.rotations[0].clone();
+          for (let i = 1; i < this.rotations.length; i++) {
+            avgRot.slerp(this.rotations[i], 1 / (i + 1));
+          }
 
-      // Усредняем повороты (через SLERP)
-      let avgRot = this.rotations[0].clone();
-      for (let i = 1; i < this.rotations.length; i++) {
-        avgRot.slerp(this.rotations[i], 1 / (i + 1));
-      }
-
-      // Применяем усреднённые значения
-      this.model.position.lerp(avgPos, this.data.lerpSpeed * (timeDelta / 1000));
-      this.model.quaternion.slerp(avgRot, this.data.lerpSpeed * (timeDelta / 1000));
-    }
-  });
-</script>
-
+          this.model.position.lerp(avgPos, this.data.lerpSpeed * (timeDelta / 1000));
+          this.model.quaternion.slerp(avgRot, this.data.lerpSpeed * (timeDelta / 1000));
+        }
+      });
+    </script>
   </body>
 </html>
-
