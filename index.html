@@ -5,7 +5,8 @@
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script> 
   </head>
   <body>
-    <a-scene mindar-image="imageTargetSrc: https://raw.githubusercontent.com/Vitalii-hton/Banksy1/main/assets/inf.mind;" 
+    <a-scene mindar-image="imageTargetSrc: https://raw.githubusercontent.com/Vitalii-hton/Banksy1/main/assets/inf.mind;"
+      filterMinCF: 0.1; filterBeta: 10;
              antialias="true"
              color-space="sRGB"
              renderer="colorManagement: true, physicallyCorrectLights"
@@ -57,7 +58,7 @@
       this.lastPos = new THREE.Vector3();
       this.lastRot = new THREE.Quaternion();
 
-      this.alpha = 0.2; // Коэффициент сглаживания (0.1-0.3)
+      this.alpha = 0.1; // Коэффициент сглаживания (0.1-0.3)
     },
 
     tick: function (time, timeDelta) {
