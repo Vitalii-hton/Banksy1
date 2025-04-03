@@ -6,81 +6,85 @@
   </head>
   <body>
     <a-scene mindar-image="imageTargetSrc: https://raw.githubusercontent.com/Vitalii-hton/Banksy1/main/assets/inf.mind;"
-      filterMinCF: 0.1; filterBeta: 10;
-             antialias="true"
-             color-space="sRGB"
-             renderer="colorManagement: true, physicallyCorrectLights"
-             vr-mode-ui="enabled: false" 
-             device-orientation-permission-ui="enabled: false">
+      filterMinCF="0.1; filterBeta=10;"
+      antialias="true"
+      color-space="sRGB"
+      renderer="colorManagement: true, physicallyCorrectLights"
+      vr-mode-ui="enabled: false" 
+      device-orientation-permission-ui="enabled: false">
 
       <a-assets>
+        <!-- Убираем avatarModel и заменяем на простой куб -->
         <a-asset-item id="avatarModel" src="https://raw.githubusercontent.com/Vitalii-hton/Banksy1/main/assets/tank4.glb"></a-asset-item>
       </a-assets>
 
-      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+      <!-- Убираем камеру, чтобы MindAR сам её управлял -->
+      <!-- <a-camera position="0 0 0" look-controls="enabled: false"></a-camera> -->
 
       <a-entity light="type: ambient; color: #ffffff; intensity: 0; castShadow: false"></a-entity>
       <a-entity light="type: directional; color: #ffffff; intensity: 2; castShadow: true" position="1 2 3"></a-entity>
       <a-entity light="type: directional; color: #0080ff; intensity: 2; castShadow: true" position="-2 3 -3"></a-entity>
 
       <a-entity id="target" mindar-image-target="targetIndex: 0">
-        <a-entity id="model"
-                  gltf-model="#avatarModel"
-                  position="0 0 0.1"
-                  scale="0.1 0.1 0.1"
-                  rotation="90 0 0"
-                  smooth-tracking="lerpSpeed: 0.05; smoothingFrames: 10">
-        </a-entity>
+        <!-- Заменяем модель на куб для простоты -->
+        <a-box id="model"
+               position="0 0 0.1"
+               scale="0.1 0.1 0.1"
+               rotation="90 0 0"
+               color="blue"
+               smooth-tracking="lerpSpeed: 0.05; smoothingFrames: 10">
+        </a-box>
       </a-entity>
 
     </a-scene>
 
     <script>
-  AFRAME.registerComponent('smooth-tracking', {
-    schema: {
-      lerpSpeed: { type: 'number', default: 0.1 },
-      smoothingFrames: { type: 'int', default: 10 }
-    },
+      AFRAME.registerComponent('smooth-tracking', {
+        schema: {
+          lerpSpeed: { type: 'number', default: 0.1 },
+          smoothingFrames: { type: 'int', default: 10 }
+        },
 
-    init: function () {
-      const targetEl = document.querySelector('#target');
-      if (!targetEl) {
-        console.error("MindAR target не найден!");
-        return;
-      }
-      
-      this.marker = targetEl.object3D;
-      this.model = this.el.object3D;
-      
-      // Калмановские переменные
-      this.estimatedPos = new THREE.Vector3();
-      this.estimatedRot = new THREE.Quaternion();
-      this.lastPos = new THREE.Vector3();
-      this.lastRot = new THREE.Quaternion();
+        init: function () {
+          const targetEl = document.querySelector('#target');
+          if (!targetEl) {
+            console.error("MindAR target не найден!");
+            return;
+          }
+          
+          this.marker = targetEl.object3D;
+          this.model = this.el.object3D;
+          
+          // Калмановские переменные
+          this.estimatedPos = new THREE.Vector3();
+          this.estimatedRot = new THREE.Quaternion();
+          this.lastPos = new THREE.Vector3();
+          this.lastRot = new THREE.Quaternion();
 
-      this.alpha = 0.1; // Коэффициент сглаживания (0.1-0.3)
-    },
+          this.alpha = 0.1; // Коэффициент сглаживания (0.1-0.3)
+        },
 
-    tick: function (time, timeDelta) {
-      if (!this.marker || !this.marker.visible) return;
+        tick: function (time, timeDelta) {
+          if (!this.marker || !this.marker.visible) return;
 
-      let targetPos = this.marker.position.clone();
-      let targetRot = this.marker.quaternion.clone();
+          let targetPos = this.marker.position.clone();
+          let targetRot = this.marker.quaternion.clone();
 
-      // Фильтр Калмана: X_est = α * X_meas + (1 - α) * X_prev
-      this.estimatedPos.lerpVectors(this.lastPos, targetPos, this.alpha);
-      this.estimatedRot.slerp(targetRot, this.alpha);
+          // Фильтр Калмана: X_est = α * X_meas + (1 - α) * X_prev
+          this.estimatedPos.lerpVectors(this.lastPos, targetPos, this.alpha);
+          this.estimatedRot.slerp(targetRot, this.alpha);
 
-      // Применяем сглаженные значения
-      this.model.position.copy(this.estimatedPos);
-      this.model.quaternion.copy(this.estimatedRot);
+          // Применяем сглаженные значения
+          this.model.position.copy(this.estimatedPos);
+          this.model.quaternion.copy(this.estimatedRot);
 
-      // Запоминаем предыдущее значение
-      this.lastPos.copy(this.estimatedPos);
-      this.lastRot.copy(this.estimatedRot);
-    }
-  });
-</script>
+          // Запоминаем предыдущее значение
+          this.lastPos.copy(this.estimatedPos);
+          this.lastRot.copy(this.estimatedRot);
+        }
+      });
+    </script>
 
   </body>
 </html>
+
