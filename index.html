@@ -27,7 +27,7 @@
                   gltf-model="#avatarModel"
                   position="0 0 0.1"
                   scale="0.1 0.1 0.1"
-                  rotation="0 -90 0"
+                  rotation="90 0 0"
                   smooth-tracking="lerpSpeed: 0.05; smoothingFrames: 10">
         </a-entity>
       </a-entity>
@@ -35,52 +35,51 @@
     </a-scene>
 
     <script>
-      AFRAME.registerComponent('smooth-tracking', {
-        schema: {
-          lerpSpeed: { type: 'number', default: 0.1 },
-          smoothingFrames: { type: 'int', default: 5 }
-        },
+  AFRAME.registerComponent('smooth-tracking', {
+    schema: {
+      lerpSpeed: { type: 'number', default: 0.1 },
+      smoothingFrames: { type: 'int', default: 10 }
+    },
 
-        init: function () {
-          const targetEl = document.querySelector('#target'); // Берём target
-          if (!targetEl) {
-            console.error("MindAR target не найден!");
-            return;
-          }
-          
-          this.marker = targetEl.object3D;
-          this.model = this.el.object3D;
-          this.positions = [];
-          this.rotations = [];
-        },
+    init: function () {
+      const targetEl = document.querySelector('#target');
+      if (!targetEl) {
+        console.error("MindAR target не найден!");
+        return;
+      }
+      
+      this.marker = targetEl.object3D;
+      this.model = this.el.object3D;
+      
+      // Калмановские переменные
+      this.estimatedPos = new THREE.Vector3();
+      this.estimatedRot = new THREE.Quaternion();
+      this.lastPos = new THREE.Vector3();
+      this.lastRot = new THREE.Quaternion();
 
-        tick: function (time, timeDelta) {
-          if (!this.marker || !this.marker.visible) return; // Проверка на null
+      this.alpha = 0.2; // Коэффициент сглаживания (0.1-0.3)
+    },
 
-          let targetPos = this.marker.position.clone();
-          let targetRot = this.marker.quaternion.clone();
+    tick: function (time, timeDelta) {
+      if (!this.marker || !this.marker.visible) return;
 
-          this.positions.push(targetPos);
-          this.rotations.push(targetRot);
+      let targetPos = this.marker.position.clone();
+      let targetRot = this.marker.quaternion.clone();
 
-          if (this.positions.length > this.data.smoothingFrames) {
-            this.positions.shift();
-            this.rotations.shift();
-          }
+      // Фильтр Калмана: X_est = α * X_meas + (1 - α) * X_prev
+      this.estimatedPos.lerpVectors(this.lastPos, targetPos, this.alpha);
+      this.estimatedRot.slerp(targetRot, this.alpha);
 
-          let avgPos = new THREE.Vector3();
-          this.positions.forEach(pos => avgPos.add(pos));
-          avgPos.divideScalar(this.positions.length);
+      // Применяем сглаженные значения
+      this.model.position.copy(this.estimatedPos);
+      this.model.quaternion.copy(this.estimatedRot);
 
-          let avgRot = this.rotations[0].clone();
-          for (let i = 1; i < this.rotations.length; i++) {
-            avgRot.slerp(this.rotations[i], 1 / (i + 1));
-          }
+      // Запоминаем предыдущее значение
+      this.lastPos.copy(this.estimatedPos);
+      this.lastRot.copy(this.estimatedRot);
+    }
+  });
+</script>
 
-          this.model.position.lerp(avgPos, this.data.lerpSpeed * (timeDelta / 1000));
-          this.model.quaternion.slerp(avgRot, this.data.lerpSpeed * (timeDelta / 1000));
-        }
-      });
-    </script>
   </body>
 </html>
