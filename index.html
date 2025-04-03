@@ -14,7 +14,7 @@
       device-orientation-permission-ui="enabled: false">
 
       <a-assets>
-        <!-- Убираем avatarModel и заменяем на простой куб -->
+        <!-- Заменяем avatarModel на куб для простоты -->
         <a-asset-item id="avatarModel" src="https://raw.githubusercontent.com/Vitalii-hton/Banksy1/main/assets/tank4.glb"></a-asset-item>
       </a-assets>
 
@@ -55,6 +55,12 @@
           this.marker = targetEl.object3D;
           this.model = this.el.object3D;
           
+          // Проверка на доступность объекта
+          if (!this.marker) {
+            console.error("Маркер не найден или недоступен.");
+            return;
+          }
+
           // Калмановские переменные
           this.estimatedPos = new THREE.Vector3();
           this.estimatedRot = new THREE.Quaternion();
@@ -87,4 +93,3 @@
 
   </body>
 </html>
-
